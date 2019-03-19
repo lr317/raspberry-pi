@@ -1,3 +1,12 @@
+from kivy.app import App
+from kivy.graphics import Color, Rectangle
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.image import AsyncImage
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.widget import Widget
+from kivy.properties import ListProperty
 import xlsxwriter
 from xlsxwriter import*
 import os.path
@@ -5,6 +14,11 @@ import string
 import tkinter as tk
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import math
+import time
+import random
+
 
 def excel():
     #def returnCadence (num):
@@ -14,67 +28,64 @@ def excel():
     n=1
 
     #Searches for exixting file of same name
-    match = os.path.exists("D:/EDP Programming/Cycling Session " + str(n)+".xlsx")      
+    match = os.path.exists("D:/EDP Programming/Cycling Session " + str(n)+".xlsx")
 
     while match==True:
-    	n=n+1
-    	match = os.path.exists("D:/EDP Programming/Cycling Session " + str(n)+".xlsx")
+        n = n + 1
+        match = os.path.exists("D:/EDP Programming/Cycling Session " + str(n)+".xlsx")
 
     #Names File
-    name_of_file = "Cycling Session " + str(n) 
-    completeName = os.path.join(save_path, name_of_file+".xlsx")	
+    name_of_file = "Cycling Session " + str(n)
+    completeName = os.path.join(save_path, name_of_file+".xlsx")
 
-    # Workbook is created 
-    wb = xlsxwriter.Workbook(completeName) 
-  
-    # add_sheet is used to create sheet. 
+    # Workbook is created
+    wb = xlsxwriter.Workbook(completeName)
+
+    # add_sheet is used to create sheet.
     sheet1 = wb.add_worksheet('Cycling_Data')
 
     #sheet1.add_table('A1:B12')
-  
+
     sheet1.write(0, 0, 'Time (s)')
     sheet1.write(0, 1, 'Cadence (rpm)')
     sheet1.write(0, 2, 'Power (W)')
 
-    #take update cadence and power values initially
-	
-    c=5				#cadence value
-    p=10			#power value
-    i=1				#time iterator
-    
-	#write values in sheet 
-    while c!=0:		
-        sheet1.write(i, 0, i)
-        sheet1.write(i, 1, c)
-        sheet1.write(i, 2, p)
-        i=i+1
-        c=0
+    i = 1                #time iterator
+
+    #take cadence and power values initially
+
+    #write values in sheet
+    #while cadence()!=0:
+    sheet1.write(i, 0, i)
+    sheet1.write(i, 1, cadence())
+    sheet1.write(i, 2, power())
+    i = i + 1
         #create loop here to update cadence and power
-		
-	
+
+
     #cadence graph
     cadenceChart = wb.add_chart({'type': 'line'})
     sheet1.insert_chart('E2', cadenceChart)
 
     cadenceChart.add_series({
-    	'categories': '=Cycling_Data!$A$2:$A$11',
-    	'values':     '=Cycling_Data!$B$2:$B$11',
-    	'line':       {'color': 'blue'},
+        'categories': '=Cycling_Data!$A$2:$A$11',
+        'values':     '=Cycling_Data!$B$2:$B$11',
+        'line':       {'color': 'blue'},
     })
 
     cadenceChart.set_title({ 'name': 'Cadence (time)'})
     cadenceChart.set_x_axis({'name': 'Time (s)'})
     cadenceChart.set_y_axis({'name': 'Cadence (rpm)'})
     cadenceChart.set_legend({'none': True})
-	
+
     #power graph
     powerChart = wb.add_chart({'type': 'line'})
     sheet1.insert_chart('M2', powerChart)
 
     powerChart.add_series({
-    	'categories': '=Cycling_Data!$A$2:$A$11',
-    	'values':     '=Cycling_Data!$C$2:$C$11',
-    	'line':       {'color': 'red'},
+        'categories': '=Cycling_Data!$A$2:$A$11',
+        'values':     '=Cycling_Data!$C$2:$C$11',
+        'line':       {'color': 'red'},
     })
 
     powerChart.set_title({ 'name': 'Power (time)'})
@@ -84,29 +95,75 @@ def excel():
 
     wb.close()
 
-    #returnCadence (time)
-    
-    #   return cadence
+#animation fucntion for cadence
+def animatecadence(i):
+    graph_data = open('Cycling_Data','r').read()
+  
+    xs = [sheet1.cell_value(i, 0) for i in range(sheet1.ncols)]
+    ys = [sheet1.cell_value(i, 1) for i in range(sheet1.ncols)]
+          xs.append(x)
+          ys.append(y)
+    ax1.clear()    
+    ax1.plot(x, y)
+
+ani = animation.FuncAnimation(fig, animatecadence, interval=1000)
+plt.show()
+
+#animation fucntion for power
+def animatepower(i):
+    graph_data = open('Cycling_Data','r').read()
+  
+    xs = [sheet1.cell_value(i, 0) for i in range(sheet1.ncols)]
+    ys = [sheet1.cell_value(i, 2) for i in range(sheet1.ncols)]
+          xs.append(x)
+          ys.append(y)
+    ax2.clear()    
+    ax2.plot(x, y)
+
+ani = animation.FuncAnimation(fig, animatepower, interval=1000)
+plt.show()
+
+class start(FloatLayout):
+
+    def __init__(self, **kwargs):
+        # make sure we aren't overriding any important functionality
+        super(start, self).__init__(**kwargs)
+        self.add_widget(
+            AsyncImage(
+                source="D:/EDP Programming/carbon.jpg",
+                size_hint= (2, 2),
+                pos_hint={'center_x':.5, 'center_y':.5}))
+        self.startbtn = Button(
+                text="START",
+                background_color=(0,1,0,1),
+                size_hint=(.3, .3),
+                pos_hint={'center_x': .5, 'center_y': .7})
+        self.startbtn.bind(on_press=self.btn_pressedstart)
+        self.add_widget(self.startbtn)
+
+        self.quitbtn = Button(
+                text="SAVE AND QUIT",
+                background_color=(1,0,0,1),
+                size_hint=(.3, .3),
+                pos_hint={'center_x': .5, 'center_y': .3})
+        self.quitbtn.bind(on_press=self.btn_pressedquit)
+        self.add_widget(self.quitbtn)
 
 
-class Application(tk.Frame):
-    def __init__(self, master=None):
-        super().__init__(master)
-        self.master = master
-        self.pack()
-        self.create_widgets()
+        with self.canvas.before:
+            Color(0, 0, 0, 0)  # green; colors range from 0-1 instead of 0-255
+            self.rect = Rectangle(size=self.size, pos=self.pos)
 
-    def create_widgets(self):
-        self.hi_there = tk.Button(self)
-        self.hi_there["text"] = "START"
-        self.hi_there["command"] = self.say_hi
-        self.hi_there.pack(side="top")
+        self.bind(size=self._update_rect, pos=self._update_rect)
 
-        self.quit = tk.Button(self, text="QUIT AND SAVE", fg="red",
-                              command=self.master.destroy)
-        self.quit.pack(side="bottom")
+    def _update_rect(self, instance, value):
+        self.rect.pos = instance.pos
+        self.rect.size = instance.size
 
-    def say_hi(self):
+    def btn_pressedstart(self, instance):
+        T = 60/cadence()               #time per revolution
+        a = 6.283185/T       #angle for each updated power input
+        # V = [x,y]
         V = np.array([[1,1],[-2,2],[4,-7]])
         origin = [0], [0] # origin point
         fig = plt.figure()
@@ -114,8 +171,15 @@ class Application(tk.Frame):
         plt.show()
         excel()
 
-root = tk.Tk()
-app = Application(master=root)
-app.mainloop()
+    def btn_pressedquit(self, instance):
+        self.destroy
 
 
+class MainApp(App):
+
+    def build(self):
+        root = start()
+        return root
+
+if __name__ == '__main__':
+    MainApp().run()
